@@ -5,33 +5,45 @@
 using namespace std;
 class CordNode {
 public:
-  CordNode* left;
-  CordNode* right;
-  string val;
+  static const string OOB_MSG;
   size_t length;
 
-  CordNode(string const& _val) : left(nullptr), right(nullptr), val(_val), length(_val.size())
+  CordNode(size_t _length) : length(_length)
+  {}
+  virtual char operator[](size_t index) = 0;
+};
+const string CordNode::OOB_MSG = "Index out of bound";
+
+class LeafNode : public CordNode {
+public:
+  string val;
+  LeafNode(string _val) : CordNode(_val.size()), val(_val)
   {
   }
-  CordNode(CordNode* _left, CordNode* _right) : left(_left), right(_right), val(), length(0)
+  char operator[](size_t index) override final {
+    if (index < 0 || index >= length) {
+      throw out_of_range(CordNode::OOB_MSG);
+    }
+    return val[index];
+  }
+};
+
+class InternalNode: public CordNode {
+public:
+  CordNode* left;
+  CordNode* right;
+  InternalNode(CordNode* _left, CordNode* _right) : CordNode(0), left(_left), right(_right)
   {
-    if (left != nullptr) {
+    if (left) {
       length += left->length;
     }
-    if (right != nullptr) {
+    if (right) {
       length += right->length;
     }
   }
-  bool is_leaf() {
-    return left == nullptr && right == nullptr;
-  }
-
-  char operator[](size_t index) {
+  char operator[](size_t index) override final {
     if (index < 0 || index >= length) {
-      return '#';
-    }
-    if (is_leaf()) {
-      return val[index];
+      throw out_of_range(CordNode::OOB_MSG);
     }
     size_t left_size = left == nullptr ? 0 : left->length;
     if (index < left_size) {
@@ -42,11 +54,11 @@ public:
 };
 
 int main() {
-  CordNode leaf1("ABCDE");
-  CordNode leaf2("FGHIJKLMNO");
-  CordNode leaf3("PQRSTUVWXYZ");
-  CordNode internal1(&leaf2, &leaf3);
-  CordNode internal2(&leaf1, &internal1);
+  LeafNode leaf1("ABCDE");
+  LeafNode leaf2("FGHIJKLMNO");
+  LeafNode leaf3("PQRSTUVWXYZ");
+  InternalNode internal1(&leaf2, &leaf3);
+  InternalNode internal2(&leaf1, &internal1);
   CordNode& root = internal2;
   for (size_t i = 0; i < root.length; i++) {
     cout << root[i] << endl;
